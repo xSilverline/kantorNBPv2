@@ -32,10 +32,10 @@ const MainPage: React.FC = () => {
     }, []);
 
     return (
-        <div className="flex w-screen h-screen bg-gray-50">
+        <div className="flex min-w-1070px w-[calc(100vw-15px)] min-h-screen bg-gray-50">
             {/* Sidebar */}
             <aside
-                className={`bg-indigo-600 text-white p-6 shadow-lg transition-all duration-400 ease-in-out transform ${
+                className={`h-screen sticky top-0 bg-indigo-600 text-white p-6 shadow-lg transition-all duration-400 ease-in-out transform ${
                     isSidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full"
                 }`}
             >
@@ -72,7 +72,7 @@ const MainPage: React.FC = () => {
                 </div>
             </aside>
             <button
-                className={`absolute top-4 bg-indigo-600 text-white text-3xl px-4 py-2 rounded-r-lg shadow-[-3px_0_10px_15px_rgb(0 0 0 / 0.1)] hover:bg-indigo-700 transition-all duration-400 ease-in-out transform ${
+                className={`fixed top-2 bg-indigo-600 text-white text-3xl px-4 py-2 rounded-r-lg shadow-[-3px_0_10px_15px_rgb(0 0 0 / 0.1)] hover:bg-indigo-700 transition-all duration-400 ease-in-out transform ${
                     isSidebarOpen ? "left-64" : "left-0"
                 }`}
                 onClick={toggleSidebar}
