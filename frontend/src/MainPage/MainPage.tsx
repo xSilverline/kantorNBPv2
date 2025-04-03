@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 interface ExchangeRate {
-    col1: string;
-    col2: string;
-    col3: string;
+    currency: string;
+    code: string;
+    mid: number;
 }
 
 const MainPage: React.FC = () => {
@@ -106,9 +106,9 @@ const MainPage: React.FC = () => {
                         <tbody>
                             {tableData.map((row, index) => (
                                 <tr key={index} className="hover:bg-indigo-50">
-                                    <td className="border border-gray-300 text-black px-6 py-3">{row.col1}</td>
-                                    <td className="border border-gray-300 text-black px-6 py-3">{row.col2}</td>
-                                    <td className="border border-gray-300 text-black px-6 py-3">{row.col3}</td>
+                                    <td className="border border-gray-300 text-black px-6 py-3">{row.currency}</td>
+                                    <td className="border border-gray-300 text-black px-6 py-3">{row.code}</td>
+                                    <td className="border border-gray-300 text-black px-6 py-3">{row.mid}</td>
                                 </tr>
                             ))}
                         </tbody>
