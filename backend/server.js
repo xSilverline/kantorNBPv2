@@ -132,7 +132,7 @@ app.get('/api/exchange-rates', async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT 
-                er.id AS rate_id, 
+                er.currency_id AS rate_id, 
                 c.name AS currency, 
                 c.code AS code, 
                 er.mid AS mid, 

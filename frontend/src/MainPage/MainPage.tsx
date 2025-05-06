@@ -65,7 +65,7 @@ const MainPage: React.FC = () => {
                 currencyId,
             });
 
-            if (response.data.message === "Added to favorites") {
+            if (response.data.message === "Dodano do ulubionych") {
                 setFavorites((prev) => [...prev, currencyId]);
             } else {
                 setFavorites((prev) => prev.filter((id) => id !== currencyId));
