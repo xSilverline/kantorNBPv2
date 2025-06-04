@@ -1,4 +1,4 @@
-// ======================== Importy ========================
+
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -6,12 +6,10 @@ const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-// ======================== Konfiguracja aplikacji ========================
 const app = express();
 const PORT = 5000;
 const SECRET_KEY = 'Tymczasowy_Klucz';
 
-// ======================== Konfiguracja bazy danych ========================
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
@@ -20,11 +18,10 @@ const pool = new Pool({
     port: 5432,
 });
 
-// ======================== Middleware ========================
 app.use(cors());
 app.use(express.json());
 
-// ======================== Funkcje pomocnicze do dat ========================
+
 
 /**
  * Znajduje ostatnią środę przed lub równą podanej dacie
@@ -69,8 +66,6 @@ const getPreviousDay = (currentDate) => {
     date.setDate(date.getDate() - 1);
     return date.toISOString().split('T')[0];
 };
-
-// ======================== Funkcje wyszukiwania dostępnych danych NBP ========================
 
 /**
  * Wyszukuje dostępne dane tabeli A NBP, cofając się dzień po dniu
@@ -128,7 +123,6 @@ const findAvailableTableBData = async (targetDate) => {
     throw new Error(`Nie znaleziono danych tabeli B od daty ${targetDate} do ${minDate}`);
 };
 
-// ======================== Funkcje aktualizacji danych ========================
 
 /**
  * Pobiera i zapisuje kursy walut dla konkretnej daty
@@ -137,8 +131,7 @@ const findAvailableTableBData = async (targetDate) => {
 const updateExchangeRatesForDate = async (targetDate) => {
     try {
         console.log(`Rozpoczynam aktualizację kursów dla daty: ${targetDate}`);
-        
-        // Sprawdź czy data nie jest poza zakresem API (błąd 400)
+
         try {
             await axios.get(`https://api.nbp.pl/api/exchangerates/tables/A/${targetDate}/?format=json`);
         } catch (testError) {
@@ -146,8 +139,7 @@ const updateExchangeRatesForDate = async (targetDate) => {
                 throw new Error(`Data ${targetDate} jest poza zakresem dostępnych danych API NBP (błąd 400)`);
             }
         }
-        
-        // Pobierz dane tabeli A (kursy codzienne)
+
         let tableA;
         try {
             tableA = await axios.get(`https://api.nbp.pl/api/exchangerates/tables/A/${targetDate}/?format=json`);
@@ -160,8 +152,7 @@ const updateExchangeRatesForDate = async (targetDate) => {
                 throw error;
             }
         }
-        
-        // Pobierz dane tabeli B (kursy środowe)
+
         let tableB = null;
         try {
             tableB = await axios.get(`https://api.nbp.pl/api/exchangerates/tables/B/${targetDate}/?format=json`);
@@ -180,12 +171,10 @@ const updateExchangeRatesForDate = async (targetDate) => {
             }
         }
 
-        // Zapisz dane do bazy
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
 
-            // Sprawdź czy dane już istnieją w bazie
             const dateExistsQuery = `SELECT 1 FROM exchange_rates WHERE date = $1 LIMIT 1`;
             const dateExistsResult = await client.query(dateExistsQuery, [targetDate]);
 
@@ -195,7 +184,6 @@ const updateExchangeRatesForDate = async (targetDate) => {
                 return;
             }
 
-            // Zapisz dane tabeli A do bazy
             if (tableA && tableA.data && tableA.data[0]) {
                 const insertCurrencyQuery = `
                     INSERT INTO currencies (name, code)
@@ -213,19 +201,16 @@ const updateExchangeRatesForDate = async (targetDate) => {
                     ON CONFLICT (currency_id, date) DO NOTHING
                 `;
 
-                // Dodaj waluty do tabeli currencies
                 for (const rate of tableA.data[0].rates) {
                     await client.query(insertCurrencyQuery, [rate.currency, rate.code]);
                 }
 
-                // Dodaj kursy do tabeli exchange_rates
                 for (const rate of tableA.data[0].rates) {
                     await client.query(insertExchangeRateQuery, [rate.code, rate.mid, targetDate]);
                 }
                 console.log(`Dodano dane tabeli A do bazy dla daty: ${targetDate}`);
             }
 
-            // Zapisz dane tabeli B do bazy (jeśli dostępne)
             if (tableB && tableB.data && tableB.data[0]) {
                 const insertCurrencyQuery = `
                     INSERT INTO currencies (name, code)
@@ -243,12 +228,10 @@ const updateExchangeRatesForDate = async (targetDate) => {
                     ON CONFLICT (currency_id, date) DO NOTHING
                 `;
 
-                // Dodaj waluty do tabeli currencies
                 for (const rate of tableB.data[0].rates) {
                     await client.query(insertCurrencyQuery, [rate.currency, rate.code]);
                 }
 
-                // Dodaj kursy do tabeli exchange_rates
                 for (const rate of tableB.data[0].rates) {
                     await client.query(insertExchangeRateQuery, [rate.code, rate.mid, targetDate]);
                 }
@@ -269,14 +252,11 @@ const updateExchangeRatesForDate = async (targetDate) => {
     }
 };
 
-/**
- * Pobiera najnowsze kursy walut z API NBP i zapisuje do bazy
- */
+
 const updateExchangeRates = async () => {
     try {
         console.log('Rozpoczynam pobieranie najnowszych kursów z API NBP...');
-        
-        // Pobierz najnowsze dane z obu tabel NBP
+
         const [tableA, tableB] = await Promise.all([
             axios.get('https://api.nbp.pl/api/exchangerates/tables/A/?format=json'),
             axios.get('https://api.nbp.pl/api/exchangerates/tables/B/?format=json'),
@@ -289,7 +269,6 @@ const updateExchangeRates = async () => {
         try {
             await client.query('BEGIN');
 
-            // Sprawdź czy dane już istnieją
             const dateExistsQuery = `SELECT 1 FROM exchange_rates WHERE date = $1 LIMIT 1`;
             const dateExistsResult = await client.query(dateExistsQuery, [effectiveDate]);
 
@@ -299,7 +278,6 @@ const updateExchangeRates = async () => {
                 return;
             }
 
-            // Dodaj wszystkie waluty do tabeli currencies
             const insertCurrencyQuery = `
                 INSERT INTO currencies (name, code)
                 VALUES ($1, $2)
@@ -310,7 +288,6 @@ const updateExchangeRates = async () => {
                 await client.query(insertCurrencyQuery, [rate.currency, rate.code]);
             }
 
-            // Dodaj kursy do tabeli exchange_rates
             const insertExchangeRateQuery = `
                 INSERT INTO exchange_rates (currency_id, mid, date)
                 VALUES (
@@ -338,8 +315,6 @@ const updateExchangeRates = async () => {
     }
 };
 
-// ======================== Endpointy podstawowe ========================
-
 /**
  * Endpoint do pobierania najnowszej dostępnej daty z bazy
  * Zwraca najnowszą datę dla której są dostępne kursy oraz maksymalną datę do wyboru
@@ -350,12 +325,12 @@ app.get('/api/latest-date', async (req, res) => {
         try {
             const todayDate = new Date().toISOString().split('T')[0];
             
-            // Znajdź najnowszą datę w bazie danych
+
             const latestDateQuery = `SELECT MAX(date) as latest_date FROM exchange_rates`;
             const latestResult = await client.query(latestDateQuery);
             let latestDate = latestResult.rows[0]?.latest_date;
             
-            // Jeśli baza jest pusta, pobierz najnowsze dane
+
             if (!latestDate) {
                 try {
                     await updateExchangeRates();
@@ -368,17 +343,14 @@ app.get('/api/latest-date', async (req, res) => {
                     latestDate = yesterday.toISOString().split('T')[0];
                 }
             }
-            
-            // Sprawdź czy dzisiejsza data jest już w bazie
+
             const todayExistsQuery = `SELECT COUNT(*) as count FROM exchange_rates WHERE date = $1`;
             const todayResult = await client.query(todayExistsQuery, [todayDate]);
             const todayExists = todayResult.rows[0].count > 0;
-            
-            // Jeśli nie ma dzisiejszych danych, spróbuj je pobrać
+
             if (!todayExists) {
                 try {
                     await updateExchangeRatesForDate(todayDate);
-                    // Sprawdź czy udało się dodać dzisiejszą datę
                     const updatedTodayResult = await client.query(todayExistsQuery, [todayDate]);
                     if (updatedTodayResult.rows[0].count > 0) {
                         latestDate = todayDate;
@@ -387,22 +359,20 @@ app.get('/api/latest-date', async (req, res) => {
                     console.log(`Nie udało się pobrać danych dla dzisiejszej daty: ${todayDate}`);
                 }
             }
-            
-            // Pobierz ostateczną najnowszą datę z bazy
+
             const finalLatestResult = await client.query(latestDateQuery);
             const finalLatestDate = finalLatestResult.rows[0]?.latest_date;
             
             res.json({ 
                 latestDate: finalLatestDate,
-                maxSelectableDate: todayDate // Zawsze dzisiejsza data jako maksymalna
+                maxSelectableDate: todayDate
             });
         } finally {
             client.release();
         }
     } catch (error) {
         console.error('Błąd pobierania najnowszej daty:', error.message);
-        
-        // Fallback response w przypadku błędu
+
         const todayDate = new Date().toISOString().split('T')[0];
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -426,49 +396,43 @@ app.get('/api/exchange-rates', async (req, res) => {
         const client = await pool.connect();
         try {
             let targetDate = date;
-            
-            // Walidacja dat - sprawdź czy nie jest z przyszłości lub za stara
+
             const todayDate = new Date().toISOString().split('T')[0];
             const minDate = '2008-01-02';
             
             if (targetDate && (targetDate > todayDate || targetDate < minDate)) {
-                // Zwróć pustą tablicę dla nieprawidłowych dat
                 return res.json([]);
             }
-            
-            // Jeśli nie podano daty, użyj najnowszej dostępnej
+
             if (!targetDate) {
                 const latestDateQuery = `SELECT MAX(date) as latest_date FROM exchange_rates`;
                 const latestResult = await client.query(latestDateQuery);
                 targetDate = latestResult.rows[0]?.latest_date;
                 
                 if (!targetDate) {
-                    // Jeśli baza jest pusta, pobierz najnowsze dane
+
                     await updateExchangeRates();
                     const newLatestResult = await client.query(latestDateQuery);
                     targetDate = newLatestResult.rows[0]?.latest_date;
                 }
             }
 
-            // Sprawdź czy mamy dane dla podanej daty
             const checkDataQuery = `SELECT COUNT(*) as count FROM exchange_rates WHERE date = $1`;
             const dataResult = await client.query(checkDataQuery, [targetDate]);
             const hasData = dataResult.rows[0].count > 0;
 
-            // Jeśli nie ma danych, spróbuj je pobrać z API NBP
             if (!hasData) {
                 try {
                     await updateExchangeRatesForDate(targetDate);
                 } catch (updateError) {
                     console.log(`Nie udało się pobrać danych dla daty ${targetDate}, używam najnowszych dostępnych`);
-                    // Fallback do najnowszych dostępnych danych
+
                     const fallbackQuery = `SELECT MAX(date) as latest_date FROM exchange_rates`;
                     const fallbackResult = await client.query(fallbackQuery);
                     targetDate = fallbackResult.rows[0]?.latest_date;
                 }
             }
 
-            // Pobierz kursy walut dla docelowej daty
             const query = `
                 SELECT
                     er.currency_id AS rate_id,
@@ -483,8 +447,7 @@ app.get('/api/exchange-rates', async (req, res) => {
             `;
             
             const result = await client.query(query, [targetDate]);
-            
-            // Jeśli nadal brak danych, zwróć najnowsze dostępne
+
             if (result.rows.length === 0) {
                 const fallbackQuery = `
                     SELECT
@@ -540,17 +503,15 @@ app.get('/api/history', async (req, res) => {
     try {
         const client = await pool.connect();
         try {
-            // Walidacja dat - sprawdź czy nie są z przyszłości lub za stare
+
             const todayDate = new Date().toISOString().split('T')[0];
             const minDate = '2008-01-02';
             
             if ((startDate && (startDate > todayDate || startDate < minDate)) ||
                 (endDate && (endDate > todayDate || endDate < minDate))) {
-                // Zwróć pustą tablicę dla nieprawidłowych dat
                 return res.json([]);
             }
-            
-            // Pobierz historię kursów dla wybranej waluty i zakresu dat
+
             const query = `
                 SELECT er.date, er.mid
                 FROM exchange_rates er
@@ -581,8 +542,6 @@ app.get('/api/update-exchange-rates', async (req, res) => {
     }
 });
 
-// ======================== Endpointy autoryzacji ========================
-
 /**
  * Endpoint do logowania użytkownika
  * Sprawdza email i hasło, zwraca token JWT
@@ -593,7 +552,7 @@ app.post('/api/login', async (req, res) => {
     try {
         const client = await pool.connect();
         try {
-            // Znajdź użytkownika po emailu
+
             const userQuery = `
                 SELECT id, username, email, password_hash, salt
                 FROM users
@@ -606,14 +565,13 @@ app.post('/api/login', async (req, res) => {
             }
 
             const user = userResult.rows[0];
-            // Sprawdź poprawność hasła
+
             const hashedPassword = bcrypt.hashSync(password, user.salt);
 
             if (hashedPassword !== user.password_hash) {
                 return res.status(401).json({ error: 'Nieprawidłowy email lub hasło' });
             }
 
-            // Zaktualizuj czas ostatniego logowania
             const updateLoginTimeQuery = `
                 UPDATE users
                 SET last_login = NOW()
@@ -621,7 +579,6 @@ app.post('/api/login', async (req, res) => {
             `;
             await client.query(updateLoginTimeQuery, [user.id]);
 
-            // Wygeneruj token JWT
             const token = jwt.sign(
                 { id: user.id, username: user.username, email: user.email },
                 SECRET_KEY,
@@ -653,7 +610,7 @@ app.post('/api/register', async (req, res) => {
     try {
         const client = await pool.connect();
         try {
-            // Sprawdź czy użytkownik już istnieje
+
             const userExistsQuery = `SELECT 1 FROM users WHERE email = $1`;
             const userExistsResult = await client.query(userExistsQuery, [email]);
 
@@ -661,11 +618,9 @@ app.post('/api/register', async (req, res) => {
                 return res.status(400).json({ error: 'Użytkownik z tym adresem email już istnieje.' });
             }
 
-            // Zahashuj hasło z solą
             const salt = bcrypt.genSaltSync(10);
             const passwordHash = bcrypt.hashSync(password, salt);
 
-            // Utwórz nowego użytkownika
             const insertUserQuery = `
                 INSERT INTO users (username, email, password_hash, salt, created_at)
                 VALUES ($1, $2, $3, $4, NOW())
@@ -682,8 +637,6 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// ======================== Endpointy ulubionych ========================
-
 /**
  * Endpoint do zarządzania ulubionymi walutami użytkownika
  * Dodaje lub usuwa walutę z ulubionych (toggle)
@@ -694,21 +647,21 @@ app.post('/api/favorites', async (req, res) => {
     try {
         const client = await pool.connect();
         try {
-            // Sprawdź czy waluta jest już w ulubionych
+
             const checkQuery = `
                 SELECT 1 FROM favorites WHERE user_id = $1 AND currency_id = $2
             `;
             const checkResult = await client.query(checkQuery, [userId, currencyId]);
 
             if (checkResult.rowCount > 0) {
-                // Usuń z ulubionych
+
                 const deleteQuery = `
                     DELETE FROM favorites WHERE user_id = $1 AND currency_id = $2
                 `;
                 await client.query(deleteQuery, [userId, currencyId]);
                 res.json({ message: 'Usunięto z ulubionych' });
             } else {
-                // Dodaj do ulubionych
+
                 const insertQuery = `
                     INSERT INTO favorites (user_id, currency_id) VALUES ($1, $2)
                 `;
@@ -747,7 +700,6 @@ app.get('/api/favorites/:userId', async (req, res) => {
     }
 });
 
-// ======================== Uruchamianie serwera ========================
 app.listen(PORT, async () => {
     console.log(`Serwer działa na porcie http://localhost:${PORT}`);
     console.log('Sprawdzam dostępność najnowszych kursów walut...');

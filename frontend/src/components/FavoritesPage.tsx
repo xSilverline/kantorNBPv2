@@ -42,7 +42,9 @@ const FavoritesPage: React.FC = () => {
                 const favoritesResponse = await axios.get(`http://localhost:5000/api/favorites/${userId}`);
                 const favoriteIds = favoritesResponse.data;
 
-                const exchangeRatesResponse = await axios.get("http://localhost:5000/api/exchange-rates");
+                const exchangeRatesResponse = await axios.get("http://localhost:5000/api/exchange-rates", {
+                    params: { date: date }
+                });
                 const allRates = exchangeRatesResponse.data;
 
                 const filteredFavorites = allRates.filter((rate: ExchangeRate) =>
@@ -120,7 +122,6 @@ const FavoritesPage: React.FC = () => {
             <div className="w-20 fixed h-screen bg-blue-200 float-left pt-4 rounded-r-2sm shadow p-4 border border-gray-200 flex flex-col gap-3">
                 {isLoggedIn && (
                     <div>
-                        {/*<button className="text-gray-600 hover:text-black text-2xl cursor-pointer"> <Home className="w-10 h-10 m-1" /></button>*/}
                         <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/")}}>
                             <Home className="w-10 h-10 m-1" />
                         </button>

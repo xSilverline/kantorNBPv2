@@ -4,22 +4,18 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ExchangeRate } from "../types/currency.ts";
 
-// Stała określająca liczbę elementów na stronie
+
 const ITEMS_PER_PAGE = 10;
 
-/**
- * Główny komponent strony - wyświetla listę kursów walut NBP
- * z możliwością filtrowania, sortowania i paginacji
- */
+
 const MainPage: React.FC = () => {
-    // ======================== Stany komponentu ========================
+
     const [tableData, setTableData] = useState<ExchangeRate[]>([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [favorites, setFavorites] = useState<number[]>([]);
     const [maxSelectableDate, setMaxSelectableDate] = useState<string>("");
     const navigate = useNavigate();
 
-    // Stany dla filtrów i paginacji
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState('');
     const [sort, setSort] = useState('name');
@@ -32,14 +28,8 @@ const MainPage: React.FC = () => {
     useEffect(() => {
         const token = localStorage.getItem("token");
         setIsLoggedIn(!!token);
+    });
 
-
-    // ======================== Funkcje pomocnicze ========================
-
-    /**
-     * Pobiera najnowszą dostępną datę z backendu
-     * Ustawia domyślną datę dla selektora dat
-     */
     const fetchLatestDate = async () => {
         try {
             const response = await axios.get("http://localhost:5000/api/latest-date");
@@ -49,7 +39,6 @@ const MainPage: React.FC = () => {
             return latestDate;
         } catch (error) {
             console.error("Error fetching latest date:", error);
-            // Fallback - ustaw wczorajszą datę
             const today = new Date();
             const todayStr = today.toISOString().split("T")[0];
             today.setDate(today.getDate() - 1);
@@ -60,19 +49,11 @@ const MainPage: React.FC = () => {
         }
     };
 
-    /**
-     * Obsługuje zmianę daty w selektorze
-     * Nie blokuje wyboru - backend zwróci pustą tablicę dla nieprawidłowych dat
-     */
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedDate = e.target.value;
         setDate(selectedDate);
     };
 
-    /**
-     * Dodaje lub usuwa walutę z ulubionych użytkownika
-     * Wymaga zalogowania użytkownika
-     */
     const toggleFavorite = async (code: string) => {
         if (!isLoggedIn) return;
 
@@ -80,7 +61,6 @@ const MainPage: React.FC = () => {
             const token = localStorage.getItem("token");
             const userId = JSON.parse(atob(token!.split(".")[1])).id;
 
-            // Znajdź ID waluty na podstawie kodu
             const currencyId = tableData.find((row) => row.code === code)?.rate_id;
             if (!currencyId) return;
 
@@ -89,7 +69,6 @@ const MainPage: React.FC = () => {
                 currencyId,
             });
 
-            // Zaktualizuj lokalny stan ulubionych
             if (response.data.message === "Dodano do ulubionych") {
                 setFavorites((prev) => [...prev, currencyId]);
             } else {
@@ -100,27 +79,16 @@ const MainPage: React.FC = () => {
         }
     };
 
-    /**
-     * Wylogowuje użytkownika i czyści dane sesji
-     */
+
     const handleLogout = () => {
         localStorage.removeItem("token");
         setIsLoggedIn(false);
     };
 
-    // ======================== Efekty React ========================
-
-    /**
-     * Efekt inicjalizujący - pobiera najnowszą datę przy pierwszym załadowaniu
-     */
     useEffect(() => {
         fetchLatestDate();
     }, []);
 
-    /**
-     * Efekt pobierający dane kursów walut gdy zmieni się data
-     * Również sprawdza status logowania i pobiera ulubione użytkownika
-     */
     useEffect(() => {
         const token = localStorage.getItem("token");
         setIsLoggedIn(!!token);
@@ -129,13 +97,11 @@ const MainPage: React.FC = () => {
             if (!date) return;
 
             try {
-                // Pobierz kursy walut dla wybranej daty
                 const response = await axios.get("http://localhost:5000/api/exchange-rates", {
                     params: { date: date }
                 });
                 setTableData(response.data);
 
-                // Jeśli użytkownik zalogowany, pobierz jego ulubione
                 if (token) {
                     const userId = JSON.parse(atob(token.split(".")[1])).id;
                     const favoritesResponse = await axios.get(`http://localhost:5000/api/favorites/${userId}`);
@@ -143,25 +109,17 @@ const MainPage: React.FC = () => {
                 }
             } catch (error: any) {
                 console.error("Error while fetching data from the backend:", error.message);
-                setTableData([]); // Ustaw pustą tablicę przy błędzie
+                setTableData([]);
             }
         };
 
         fetchData();
     }, [date]);
 
-    /**
-     * Resetuje paginację do pierwszej strony gdy zmienią się filtry
-     */
     useEffect(() => {
         setCurrentPage(1);
     }, [search, sort]);
 
-    // ======================== Przetwarzanie danych ========================
-
-    /**
-     * Filtrowanie i sortowanie danych na podstawie wybranych kryteriów
-     */
     const filteredData = tableData
         .filter((item) =>
             item.currency.toLowerCase().includes(search.toLowerCase()) ||
@@ -174,16 +132,12 @@ const MainPage: React.FC = () => {
             return 0;
         });
 
-    /**
-     * Obliczenie liczby stron i danych dla aktualnej strony
-     */
     const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
     const paginatedData = filteredData.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
 
-    // ======================== Renderowanie komponentu ========================
     return (
 
         <div className="bg-[#f6f6f6] min-h-screen w-screen text-gray-900 overflow-hidden overflow-x-hidden">
@@ -202,7 +156,7 @@ const MainPage: React.FC = () => {
                             </button>
                         </div>
                         )}
-
+                </div>
                     <div className="absolute p-0 m-0 left-0 bottom-0 align-middle w-20">
                         <hr className="gray-line" />
                         {isLoggedIn ? (
@@ -217,7 +171,6 @@ const MainPage: React.FC = () => {
                                     <label className="text-sm w-20 text-center font-semibold mb-5 ">Wyloguj</label>
                                 </div>
                             </div>
-                        </div>
                     ) : (
                         <div className="align-middle items-center gap-2 text-sm text-gray-600 w-full">
                             <div className="w-20 flex flex-col justify-center">
@@ -231,10 +184,7 @@ const MainPage: React.FC = () => {
                             </div>
                         </div>
                     )}
-                </div>
             </div>
-
-            {/* ======================== Nagłówek strony ======================== */}
             <div className="text-center p-6">
                 <h1 className="text-6xl">KURSY WYMIANY WALUT NBP</h1>
             </div>
@@ -244,8 +194,6 @@ const MainPage: React.FC = () => {
                 <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6 space-y-6">
 
                     <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
-                        
-                        {/* Pole wyszukiwania */}
                         <div className="flex flex-col">
                             <label className="text-sm font-semibold mb-1 text-left">Wyszukaj</label>
                             <input
@@ -256,8 +204,6 @@ const MainPage: React.FC = () => {
                                 className="border border-gray-300 rounded px-3 py-2 w-full"
                             />
                         </div>
-                        
-                        {/* Selektor sortowania */}
                         <div className="flex flex-col">
                             <label className="text-sm font-semibold mb-1 text-left">Sortuj według</label>
                             <select
@@ -270,8 +216,6 @@ const MainPage: React.FC = () => {
                                 <option value="ByRate">Kurs</option>
                             </select>
                         </div>
-                        
-                        {/* Selektor daty */}
                         <div className="flex flex-col">
                             <label className="text-sm font-semibold mb-1 text-left">Data</label>
                             <input
@@ -318,22 +262,15 @@ const MainPage: React.FC = () => {
                             </div>
                         ))
                     ) : (
-                        /* Komunikat gdy brak danych */
                         <div className="text-center py-8 text-gray-500">
                             Brak danych dla wybranej daty
                         </div>
                     )}
-
-                    {/* ======================== Paginacja ======================== */}
                     <div className="flex justify-between items-center pt-4 text-sm text-gray-600">
-                        {/* Informacja o liczbie wyświetlanych elementów */}
                         <span>
                             {currentPage * 10 <= filteredData.length ? currentPage * 10 : filteredData.length} z {filteredData.length}
                         </span>
-                        
-                        {/* Przyciski nawigacji stron */}
                         <div className="flex items-center space-x-1">
-                            {/* Przycisk poprzednia strona */}
                             <button
                                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
@@ -341,8 +278,6 @@ const MainPage: React.FC = () => {
                             >
                                 &lt;
                             </button>
-
-                            {/* Pierwsza strona */}
                             {currentPage > 0 && (
                                 <>
                                     <button
@@ -354,8 +289,6 @@ const MainPage: React.FC = () => {
                                     {currentPage > 3 && <span className="px-1">...</span>}
                                 </>
                             )}
-
-                            {/* Strony wokół aktualnej */}
                             {[currentPage - 1, currentPage, currentPage + 1].map((page) => (
                                 page > 1 && page < totalPages && (
                                     <button
@@ -367,8 +300,6 @@ const MainPage: React.FC = () => {
                                     </button>
                                 )
                             ))}
-
-                            {/* Ostatnia strona */}
                             {currentPage < totalPages + 1 && totalPages > 1 && (
                                 <>
                                     {currentPage < totalPages - 2 && <span className="px-1">...</span>}
@@ -380,8 +311,6 @@ const MainPage: React.FC = () => {
                                     </button>
                                 </>
                             )}
-
-                            {/* Przycisk następna strona */}
                             <button
                                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
@@ -394,6 +323,7 @@ const MainPage: React.FC = () => {
                 </div>
             </main>
         </div>
+
     );
 };
 
