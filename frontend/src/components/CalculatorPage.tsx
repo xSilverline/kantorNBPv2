@@ -84,14 +84,12 @@ const CalculatorPage: React.FC = () => {
             {/* Sidebar */}
 
             <div className="w-20 min-h-screen bg-blue-200 float-left pt-4 rounded-r-2sm shadow p-4 border border-gray-200 flex flex-col gap-3">
-                <div>
-                    <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/")}}>
-                        <Home className="w-10 h-10 m-1" />
-                    </button>
-                </div>
+
                 {isLoggedIn && (
                     <div>
-                        {/*<button className="text-gray-600 hover:text-black text-2xl cursor-pointer"> <Home className="w-10 h-10 m-1" /></button>*/}
+                        <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/")}}>
+                            <Home className="w-10 h-10 m-1" />
+                        </button>
                         <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/favorites")}}>
                             <Heart className="w-10 h-10 m-1" />
                         </button>

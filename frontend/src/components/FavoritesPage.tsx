@@ -126,19 +126,14 @@ const FavoritesPage: React.FC = () => {
                         <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/")}}>
                             <Home className="w-10 h-10 m-1" />
                         </button>
+                        <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/calculator")}}>
+                            <Calculator className="w-10 h-10 m-1" />
+                        </button>
+                        <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/history")}}>
+                            <CalendarRange className="w-10 h-10 m-1" />
+                        </button>
                     </div>
                 )}
-                <div>
-                    <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/calculator")}}>
-                        <Calculator className="w-10 h-10 m-1" />
-                    </button>
-                </div>
-                <div>
-                    <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/history")}}>
-                        <CalendarRange className="w-10 h-10 m-1" />
-                    </button>
-                </div>
-
 
                 <div className="absolute p-0 m-0 left-0 bottom-0 align-middle w-20">
                     <hr className="gray-line" />
