@@ -17,19 +17,16 @@ const Register: React.FC = () => {
         setSuccess(null);
 
         try {
-
             const response = await axios.post("http://localhost:5000/api/register", {
                 username,
                 email,
                 password,
             });
-
             setSuccess(response.data.message);
             setUsername("");
             setEmail("");
             setPassword("");
         } catch (err: any) {
-            // Obsługa błędów rejestracji
             console.error("Błąd rejestracji:", err.response?.data?.error || err.message);
             setError(err.response?.data?.error || "Wystąpił błąd podczas rejestracji.");
         }

@@ -115,7 +115,6 @@ const Login: React.FC = () => {
                         </button>
                     </p>
 
-                    {/* Przycisk powrotu do strony głównej */}
                     <div className="mt-6 text-center">
                         <button
                             onClick={() => navigate("/")}
