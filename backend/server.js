@@ -145,49 +145,63 @@ app.get('/api/exchange-rates', async (req, res) => {
 });
 
 // Pobieranie kursów wg daty
-// app.get('/api/exchange-rates', async (req, res) => {
-//     const { date } = req.query;
-//
-//     try {
-//         const client = await pool.connect();
-//         try{
-//             const query = `
-//             SELECT
-//                 er.currency_id AS rate_id,
-//                 c.name AS currency,
-//                 c.code AS code,
-//                 er.mid AS mid,
-//                 er.date AS date
-//             FROM exchange_rates er
-//             JOIN currencies c ON er.currency_id = c.id
-//             WHERE er.date = $1
-//         `;
-//             const result = await client.query(query,[date])
-//
-//             return res.json(result.rows);
-//
-//             // if (result.rows.length > 0) {
-//             //     return res.json(result.rows);
-//             // }
-//
-//             // updateExchangeRates(date);
-//             //
-//             // const result_reselect = await client.query(query,[date])
-//             //
-//             // if (result_reselect.rows.length > 0) {
-//             //     return res.json(result_reselect.rows);
-//             // }
-//             // console.error('Błąd pobierania kursów walut: Brak możliwości pobrania wstecz!');
-//         }
-//         finally {
-//             client.release();
-//         }
-//
-//     } catch (error) {
-//         console.error('Błąd pobierania kursów walut:', error.message);
-//         res.status(500).json({ error: 'Nie udało się pobrać kursów walut.' });
-//     }
-// });
+app.get('/api/exchange-rates-by-date', async (req, res) => {
+    const { date } = req.query;
+
+    if (!date) {
+        return res.status(400).json({ error: 'Parametr "date" jest wymagany.' });
+    }
+
+    try {
+        const client = await pool.connect();
+        try {
+            // Najpierw sprawdzamy czy mamy dane dla tej daty w bazie
+            const query = `
+                SELECT
+                    er.currency_id AS rate_id,
+                    c.name AS currency,
+                    c.code AS code,
+                    er.mid AS mid,
+                    er.date AS date
+                FROM exchange_rates er
+                JOIN currencies c ON er.currency_id = c.id
+                WHERE er.date = '${date}'
+                ORDER BY c.code ASC
+            `;
+            console.log(query)
+            const result = await client.query(query);
+            //console.log(result.rows)
+            if (result.rows.length > 0) {
+                
+                return res.json(result.rows);
+            }
+
+            // Jeśli nie ma danych w bazie, próbujemy pobrać z API NBP
+            try {
+                await updateExchangeRates(date);
+                
+                // Ponowne zapytanie po aktualizacji
+                const resultAfterUpdate = await client.query(query, [date]);
+
+                console.log(resultAfterUpdate)
+                
+                if (resultAfterUpdate.rows.length > 0) {
+                    return res.json(resultAfterUpdate.rows);
+                }
+                
+                return res.status(404).json({ error: 'Brak danych dla podanej daty.' });
+            } catch (apiError) {
+                console.error('Błąd podczas pobierania danych historycznych:', apiError.message);
+                return res.status(404).json({ error: 'Brak danych dla podanej daty.' });
+            }
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Błąd pobierania kursów walut:', error.message);
+        res.status(500).json({ error: 'Nie udało się pobrać kursów walut.' });
+    }
+});
 
 // ======================== Endpointy autoryzacji ========================
 
@@ -272,23 +286,37 @@ app.post('/api/register', async (req, res) => {
 // ======================== Aktualizacja kursów walut ========================
 
 const updateExchangeRates = async (dateInput) => {
-
     try {
-
-        const [tableA, tableB] = await Promise.all([
-            axios.get('https://api.nbp.pl/api/exchangerates/tables/A/?format=json'),
-            axios.get('https://api.nbp.pl/api/exchangerates/tables/B/?format=json'),
-        ]);
-
-        // if(dateInput !== undefined) {
-        //     console.error(`https://api.nbp.pl/api/exchangerates/tables/A/${dateInput}/?format=json`);
-        //     const [tableA, tableB] = await Promise.all([
-        //         axios.get(`https://api.nbp.pl/api/exchangerates/tables/A/${dateInput}/?format=json`),
-        //         axios.get(`https://api.nbp.pl/api/exchangerates/tables/B/${dateInput}/?format=json`),
-        //     ]);
-        // }
-
-        const combinedData = [...tableA.data[0].rates, ...tableB.data[0].rates];
+        let tableA, tableB;
+        
+        if (dateInput) {
+            //console.log(dateInput)
+            //console.log(`https://api.nbp.pl/api/exchangerates/tables/A/${dateInput}/?format=json`)
+            // Pobieranie danych historycznych dla konkretnej daty
+            try {
+                tableA = await axios.get(`https://api.nbp.pl/api/exchangerates/tables/A/${dateInput}?format=json`);
+                console.log('tableA:', tableA.data);
+            } catch (err) {
+                console.error(`Błąd pobierania table A dla daty ${dateInput}:`, err.response?.status, err.message);
+            }
+            
+            try {
+                tableB = await axios.get(`https://api.nbp.pl/api/exchangerates/tables/B/${dateInput}?format=json`);
+                console.log('tableB:', tableB.data);
+            } catch (err) {
+                console.error(`Błąd pobierania table B dla daty ${dateInput}:`, err.response?.status, err.message);
+            }
+            
+            //console.log(tableA, tableB)
+        } else {
+            // Pobieranie aktualnych danych
+            [tableA, tableB] = await Promise.all([
+                axios.get('https://api.nbp.pl/api/exchangerates/tables/A/?format=json'),
+                axios.get('https://api.nbp.pl/api/exchangerates/tables/B/?format=json'),
+            ]);
+        }
+        const combinedData = tableB ? [...tableA.data[0].rates, ...tableB.data[0].rates] : [...tableA.data[0].rates];
+        
         const effectiveDate = tableA.data[0].effectiveDate;
 
         const client = await pool.connect();
@@ -334,22 +362,15 @@ const updateExchangeRates = async (dateInput) => {
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('Błąd podczas aktualizacji danych w bazie:', error.message);
+            throw error; // Rzucamy błąd dalej, aby można było go obsłużyć w endpointcie
         } finally {
             client.release();
         }
     } catch (error) {
         console.error('Błąd podczas pobierania danych z API NBP:', error.message);
+        throw error; // Rzucamy błąd dalej
     }
 };
-
-app.get('/api/update-exchange-rates', async (req, res) => {
-    try {
-        await updateExchangeRates();
-        res.json({ message: 'Dane zostały zaktualizowane.' });
-    } catch (error) {
-        res.status(500).json({ error: 'Nie udało się zaktualizować danych.' });
-    }
-});
 
 // ======================== Uruchamianie serwera ========================
 app.listen(PORT, async () => {
