@@ -337,7 +337,6 @@ app.get('/api/latest-date', async (req, res) => {
                     const newLatestResult = await client.query(latestDateQuery);
                     latestDate = newLatestResult.rows[0]?.latest_date;
                 } catch (updateError) {
-                    // Fallback do wczorajszej daty
                     const yesterday = new Date();
                     yesterday.setDate(yesterday.getDate() - 1);
                     latestDate = yesterday.toISOString().split('T')[0];

@@ -23,7 +23,7 @@ const FavoritesPage: React.FC = () => {
     const [sort, setSort] = useState('name');
     const [date, setDate] = useState(today);
     const [hasChanged, setHasChanged] = useState(false);
-    const minDate = "2008-01-01";
+    const minDate = "2008-01-02";
     useEffect(() => {
         const token = localStorage.getItem("token");
         setIsLoggedIn(!!token);

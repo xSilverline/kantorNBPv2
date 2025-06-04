@@ -13,35 +13,39 @@ const MainPage: React.FC = () => {
     const [tableData, setTableData] = useState<ExchangeRate[]>([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [favorites, setFavorites] = useState<number[]>([]);
-    const [maxSelectableDate, setMaxSelectableDate] = useState<string>("");
-    const navigate = useNavigate();
 
+    const navigate = useNavigate();
+    const todayDate = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(todayDate.getDate() - 1);
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState('');
     const [sort, setSort] = useState('name');
+    const today = yesterday.toISOString().split("T")[0];
+    const [date, setDate] = useState(today);
+    const [maxSelectableDate, setMaxSelectableDate] = useState<string>(today);
 
-    const [date, setDate] = useState('');
-
-
-    const minDate = "2008-01-01";
+    const minDate = "2008-01-02";
 
     useEffect(() => {
         const token = localStorage.getItem("token");
         setIsLoggedIn(!!token);
+
     });
 
     const fetchLatestDate = async () => {
         try {
             const response = await axios.get("http://localhost:5000/api/latest-date");
             const { latestDate, maxSelectableDate } = response.data;
-            setDate(latestDate);
+            const currentDate = latestDate.toString().split('T')[0];
+            setDate(currentDate);
             setMaxSelectableDate(maxSelectableDate);
             return latestDate;
         } catch (error) {
             console.error("Error fetching latest date:", error);
             const today = new Date();
             const todayStr = today.toISOString().split("T")[0];
-            today.setDate(today.getDate() - 1);
+            today.setDate(today.getDate()-1);
             const fallbackDate = today.toISOString().split("T")[0];
             setDate(fallbackDate);
             setMaxSelectableDate(todayStr);
@@ -246,7 +250,6 @@ const MainPage: React.FC = () => {
                                 <span>{item.currency}</span>
                                 <div className="flex items-center justify-center pl-16 gap-10">
                                     <span className="font-bold pl-4">{Number(item.mid).toFixed(4)}</span>
-                                    {/* Przycisk dodania do ulubionych - tylko dla zalogowanych */}
                                     {isLoggedIn && (
                                         <div>
                                             <button className="text-xl" onClick={() => toggleFavorite(item.code)}>

@@ -26,7 +26,7 @@ const HistoryPage: React.FC = () => {
     const today = yesterday.toISOString().split("T")[0];
     const defaultDateStart = ninetyDaysAgo.toISOString().split('T')[0];
 
-    const minDate = "2008-01-01";
+    const minDate = "2008-01-02";
 
 
     const ITEMS_PER_PAGE=10;
