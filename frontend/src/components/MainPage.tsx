@@ -25,6 +25,8 @@ const MainPage: React.FC = () => {
     const [sort, setSort] = useState('name');
     const [date, setDate] = useState(today);
 
+    const minDate = "2008-01-01";
+
     useEffect(() => {
         const token = localStorage.getItem("token");
         setIsLoggedIn(!!token);
@@ -112,13 +114,11 @@ const MainPage: React.FC = () => {
     );
 
     return (
-        <div className="bg-[#f6f6f6] min-h-screen min-w-screen text-gray-900 overflow-hidden">
-            {/* Sidebar */}
+        <div className="bg-[#f6f6f6] min-h-screen w-screen text-gray-900 overflow-hidden overflow-x-hidden">
 
-                <div className="w-20 min-h-screen bg-blue-200 float-left pt-4 rounded-r-2sm shadow p-4 border border-gray-200 flex flex-col gap-3">
+                <div className="w-20 fixed h-screen bg-blue-200 float-left pt-4 rounded-r-2sm shadow p-4 border border-gray-200 flex flex-col gap-3">
                     {isLoggedIn && (
                         <div>
-                            {/*<button className="text-gray-600 hover:text-black text-2xl cursor-pointer"> <Home className="w-10 h-10 m-1" /></button>*/}
                             <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/favorites")}}>
                                 <Heart className="w-10 h-10 m-1" />
                             </button>
@@ -167,10 +167,8 @@ const MainPage: React.FC = () => {
             </div>
             <hr className="border-[#0000004a]" />
 
-            {/* Main content */}
             <main className="flex-1 p-6">
                 <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6 space-y-6">
-                    {/* Filters */}
                     <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
                         <div className="flex flex-col">
                             <label className="text-sm font-semibold mb-1 text-left">Wyszukaj</label>
@@ -199,6 +197,7 @@ const MainPage: React.FC = () => {
                             <input
                                 type="date"
                                 value={date}
+                                min={minDate}
                                 max={today}
                                 onChange={(e) => setDate(e.target.value)}
                                 className="cursor-pointer border border-gray-300 rounded px-3 py-2 w-full"
@@ -206,14 +205,12 @@ const MainPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Table header */}
                     <div className="grid grid-cols-3 text-center font-semibold border-b border-[#0000004a]  pb-2">
                         <span>Kod</span>
                         <span>Nazwa Waluty</span>
                         <span>Kurs Wymiany</span>
                     </div>
 
-                    {/* Currency rows */}
                     {paginatedData.map((item) => (
                         <div
                             key={item.rate_id}
