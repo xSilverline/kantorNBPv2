@@ -83,7 +83,7 @@ const CalculatorPage: React.FC = () => {
         <div className="bg-[#f6f6f6] min-h-screen min-w-screen text-gray-900 overflow-hidden">
             {/* Sidebar */}
 
-            <div className="w-20 min-h-screen bg-blue-200 float-left pt-4 rounded-r-2sm shadow p-4 border border-gray-200 flex flex-col gap-3">
+            <div className="w-20 fixed h-screen bg-blue-200 float-left pt-4 rounded-r-2sm shadow p-4 border border-gray-200 flex flex-col gap-3">
 
                 {isLoggedIn && (
                     <div>
