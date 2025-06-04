@@ -25,6 +25,8 @@ const MainPage: React.FC = () => {
     const [sort, setSort] = useState('name');
     const [date, setDate] = useState(today);
 
+    const minDate = "2008-01-01";
+
     useEffect(() => {
         const token = localStorage.getItem("token");
         setIsLoggedIn(!!token);
@@ -195,6 +197,7 @@ const MainPage: React.FC = () => {
                             <input
                                 type="date"
                                 value={date}
+                                min={minDate}
                                 max={today}
                                 onChange={(e) => setDate(e.target.value)}
                                 className="cursor-pointer border border-gray-300 rounded px-3 py-2 w-full"

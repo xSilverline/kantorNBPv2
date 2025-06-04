@@ -19,11 +19,15 @@ const HistoryPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const todayDate = new Date();
     const yesterday = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(todayDate.getDate()-30);
+    const ninetyDaysAgo = new Date();
+
+    ninetyDaysAgo.setDate(todayDate.getDate()-90);
     yesterday.setDate(todayDate.getDate() - 1);
     const today = yesterday.toISOString().split("T")[0];
-    const defaultDateStart = thirtyDaysAgo.toISOString().split('T')[0];
+    const defaultDateStart = ninetyDaysAgo.toISOString().split('T')[0];
+
+    const minDate = "2008-01-01";
+
 
     const ITEMS_PER_PAGE=10;
 
@@ -73,6 +77,75 @@ const HistoryPage: React.FC = () => {
 
     useEffect(() =>
         setCurrentPage(1),[startDate,endDate,currencyCode]);
+
+    const getEndDateLimits = () => {
+        if (!startDate) return { min: minDate, max: today };
+
+        const start = new Date(startDate);
+        const minEndDate = new Date(start);
+        const maxEndDate = new Date(start);
+
+        minEndDate.setDate(start.getDate());
+        maxEndDate.setDate(start.getDate() + 90);
+
+        return {
+            min: startDate,
+            max: maxEndDate > new Date(today) ? today : maxEndDate.toISOString().split('T')[0]
+        };
+    };
+
+    const getStartDateLimits = () => {
+        if (!endDate) return { min: minDate, max: today };
+
+        const end = new Date(endDate);
+        const minStartDate = new Date(end);
+        const maxStartDate = new Date(end);
+
+        minStartDate.setDate(end.getDate() - 90);
+        maxStartDate.setDate(end.getDate());
+
+        return {
+            min: minStartDate < new Date(minDate) ? minDate : minStartDate.toISOString().split('T')[0],
+            max: endDate
+        };
+    };
+
+    const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newStartDate = e.target.value;
+        setStartDate(newStartDate);
+
+        if (newStartDate && endDate) {
+            const start = new Date(newStartDate);
+            const end = new Date(endDate);
+            const diffDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 90) {
+                const newEndDate = new Date(start);
+                newEndDate.setDate(start.getDate() + 90);
+                setEndDate(newEndDate.toISOString().split('T')[0]);
+            }
+        }
+    };
+
+    const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newEndDate = e.target.value;
+        setEndDate(newEndDate);
+
+        if (startDate && newEndDate) {
+            const start = new Date(startDate);
+            const end = new Date(newEndDate);
+            const diffDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 90) {
+                const newStartDate = new Date(end);
+                newStartDate.setDate(end.getDate() - 90);
+                setStartDate(newStartDate.toISOString().split('T')[0]);
+            }
+        }
+    };
+
+    const endDateLimits = getEndDateLimits();
+    const startDateLimits = getStartDateLimits();
 
     const sortedData = historyData
         .sort((a, b) => {
@@ -164,8 +237,9 @@ const HistoryPage: React.FC = () => {
                                 <input
                                     type="date"
                                     value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    max={today}
+                                    onChange={handleStartDateChange}
+                                    min={minDate}
+                                    max={startDateLimits.max}
                                     className="border border-gray-300 rounded px-3 py-2 w-full placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 />
                             </div>
@@ -174,7 +248,8 @@ const HistoryPage: React.FC = () => {
                                 <input
                                     type="date"
                                     value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
+                                    onChange={handleEndDateChange}
+                                    min={endDateLimits.min}
                                     max={today}
                                     className="border border-gray-300 rounded px-3 py-2 w-full placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 />
