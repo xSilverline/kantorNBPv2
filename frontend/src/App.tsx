@@ -2,12 +2,12 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import './App.css';
 
-import MainPage from "./MainPage/MainPage.tsx";
-import FavoritesPage from "./FavoritesPage/FavoritesPage";
-import HistoryPage from "./HistoryPage/HistoryPage";
-import CalculatorPage from "./CalculatorPage/CalculatorPage";
-import Login from "./Login/Login.tsx";
-import Register from "./Register/Register.tsx";
+import MainPage from "./components/MainPage.tsx";
+import FavoritesPage from "./components/FavoritesPage.tsx";
+import HistoryPage from "./components/HistoryPage.tsx";
+import CalculatorPage from "./components/CalculatorPage.tsx";
+import Login from "./components/Login.tsx";
+import Register from "./components/Register.tsx";
 
 function App() {
     return (
