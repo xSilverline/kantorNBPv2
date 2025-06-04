@@ -17,27 +17,24 @@ const Register: React.FC = () => {
         setSuccess(null);
 
         try {
-
             const response = await axios.post("http://localhost:5000/api/register", {
                 username,
                 email,
                 password,
             });
-
             setSuccess(response.data.message);
             setUsername("");
             setEmail("");
             setPassword("");
         } catch (err: any) {
-            // Obsługa błędów rejestracji
             console.error("Błąd rejestracji:", err.response?.data?.error || err.message);
             setError(err.response?.data?.error || "Wystąpił błąd podczas rejestracji.");
         }
     };
 
     return (
-        <div className="bg-[#f6f6f6] min-h-screen min-w-screen text-gray-900 overflow-hidden">
-            <div className="w-20 min-h-screen bg-blue-200 float-left pt-4 rounded-r-2sm shadow p-4 border border-gray-200 flex flex-col gap-3">
+        <div className="bg-[#f6f6f6] min-h-screen w-screen text-gray-900 overflow-hidden">
+            <div className="w-20 fixed h-screen bg-blue-200 float-left pt-4 rounded-r-2sm shadow p-4 border border-gray-200 flex flex-col gap-3">
                 <div>
                     <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/")}}>
                         <Home className="w-10 h-10 m-1" />

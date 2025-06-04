@@ -34,6 +34,9 @@ input {
   color-scheme: light;
 }
 
+body {
+  overflow-x: hidden;
+}
 
 
 /*body {*/

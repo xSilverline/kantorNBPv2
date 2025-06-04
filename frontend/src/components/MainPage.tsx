@@ -23,7 +23,16 @@ const MainPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState('');
     const [sort, setSort] = useState('name');
+
     const [date, setDate] = useState('');
+
+
+    const minDate = "2008-01-01";
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        setIsLoggedIn(!!token);
+
 
     // ======================== Funkcje pomocnicze ========================
 
@@ -176,39 +185,37 @@ const MainPage: React.FC = () => {
 
     // ======================== Renderowanie komponentu ========================
     return (
-        <div className="bg-[#f6f6f6] min-h-screen min-w-screen text-gray-900 overflow-hidden">
-            
-            {/* ======================== Pasek boczny ======================== */}
-            <div className="w-20 min-h-screen bg-blue-200 float-left pt-4 rounded-r-2sm shadow p-4 border border-gray-200 flex flex-col gap-3">
-                
-                {/* Przyciski nawigacji dla zalogowanych użytkowników */}
-                {isLoggedIn && (
-                    <div>
-                        <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => navigate("/favorites")}>
-                            <Heart className="w-10 h-10 m-1" />
-                        </button>
-                        <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => navigate("/calculator")}>
-                            <Calculator className="w-10 h-10 m-1" />
-                        </button>
-                        <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => navigate("/history")}>
-                            <CalendarRange className="w-10 h-10 m-1" />
-                        </button>
-                    </div>
-                )}
 
-                {/* Sekcja logowania/wylogowania na dole paska */}
-                <div className="absolute p-0 m-0 left-0 bottom-0 align-middle w-20">
-                    <hr className="gray-line" />
-                    {isLoggedIn ? (
-                        <div className="align-middle items-center gap-2 text-sm text-gray-600 w-full">
-                            <div className="w-20 flex flex-col justify-center">
-                                <button 
-                                    className="w-20 h-15 float-left flex items-center justify-center text-2xl hover:text-black cursor-pointer"
-                                    onClick={handleLogout}
-                                >
-                                    <LogOut className="w-10 h-10" />
-                                </button>
-                                <label className="text-sm w-20 text-center font-semibold mb-5">Wyloguj</label>
+        <div className="bg-[#f6f6f6] min-h-screen w-screen text-gray-900 overflow-hidden overflow-x-hidden">
+
+                <div className="w-20 fixed h-screen bg-blue-200 float-left pt-4 rounded-r-2sm shadow p-4 border border-gray-200 flex flex-col gap-3">
+                    {isLoggedIn && (
+                        <div>
+                            <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/favorites")}}>
+                                <Heart className="w-10 h-10 m-1" />
+                            </button>
+                            <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/calculator")}}>
+                                <Calculator className="w-10 h-10 m-1" />
+                            </button>
+                            <button className="text-gray-600 hover:text-black text-2xl cursor-pointer" onClick={() => {navigate("/history")}}>
+                                <CalendarRange className="w-10 h-10 m-1" />
+                            </button>
+                        </div>
+                        )}
+
+                    <div className="absolute p-0 m-0 left-0 bottom-0 align-middle w-20">
+                        <hr className="gray-line" />
+                        {isLoggedIn ? (
+                            <div className="align-middle items-center gap-2 text-sm text-gray-600 w-full">
+                                <div className="w-20 flex flex-col justify-center">
+                                    <button className="w-20 h-15 float-left flex items-center justify-center text-2xl hover:text-black cursor-pointer "
+                                            onClick={() => {
+                                                handleLogout();
+                                            }} >
+                                        <LogOut className="w-10 h-10"
+                                        /> </button>
+                                    <label className="text-sm w-20 text-center font-semibold mb-5 ">Wyloguj</label>
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -233,11 +240,9 @@ const MainPage: React.FC = () => {
             </div>
             <hr className="border-[#0000004a]" />
 
-            {/* ======================== Główna zawartość ======================== */}
             <main className="flex-1 p-6">
                 <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6 space-y-6">
-                    
-                    {/* Sekcja filtrów */}
+
                     <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
                         
                         {/* Pole wyszukiwania */}
@@ -273,21 +278,20 @@ const MainPage: React.FC = () => {
                                 type="date"
                                 value={date}
                                 max={maxSelectableDate}
-                                min="2008-01-02"
                                 onChange={handleDateChange}
+                                min={minDate}
                                 className="cursor-pointer border border-gray-300 rounded px-3 py-2 w-full"
                             />
                         </div>
                     </div>
 
-                    {/* Nagłówek tabeli */}
-                    <div className="grid grid-cols-3 text-center font-semibold border-b border-[#0000004a] pb-2">
+
+                    <div className="grid grid-cols-3 text-center font-semibold border-b border-[#0000004a]  pb-2">
                         <span>Kod</span>
                         <span>Nazwa Waluty</span>
                         <span>Kurs Wymiany</span>
                     </div>
-
-                    {/* Wiersze z kursami walut */}
+                  
                     {paginatedData.length > 0 ? (
                         paginatedData.map((item) => (
                             <div
